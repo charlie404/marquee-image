@@ -102,12 +102,20 @@ class MarqueeImage extends HTMLElement {
       const scale = canvasHeight / img.height;
       return img.width * scale;
     });
-    this.totalWidth =
+    
+    // Calculate width of one complete cycle
+    this.singleCycleWidth =
       this.scaledWidths.reduce((sum, w) => sum + w, 0) +
       this.margin * this.images.length;
+    
+    // Calculate how many instances we need to fill the screen + buffer
+    const screenWidth = this.canvas.width;
+    const cyclesNeeded = Math.ceil((screenWidth + this.singleCycleWidth) / this.singleCycleWidth);
+    const totalInstances = Math.max(this.images.length * cyclesNeeded, this.images.length * this.repeat);
+    
     this.positions = [];
     let x = 0;
-    for (let i = 0; i < this.images.length * this.repeat; i++) {
+    for (let i = 0; i < totalInstances; i++) {
       this.positions.push(x);
       x += this.scaledWidths[i % this.images.length] + this.margin;
     }
@@ -125,10 +133,10 @@ class MarqueeImage extends HTMLElement {
     this.positions = this.positions.map((x, i) => {
       let newX = x - delta;
       if (this.reverse) {
-        if (newX > this.canvas.width) newX -= this.totalWidth;
+        if (newX > this.canvas.width) newX -= this.singleCycleWidth;
       } else {
         if (newX < -this.scaledWidths[i % this.images.length])
-          newX += this.totalWidth;
+          newX += this.singleCycleWidth;
       }
       return newX;
     });
