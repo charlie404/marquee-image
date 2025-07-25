@@ -2,7 +2,9 @@ class MarqueeImage extends HTMLElement {
   static get observedAttributes() {
     return [
       "speed",
-      "margin",
+      "desktop-margin",
+      "tablet-margin",
+      "mobile-margin",
       "desktop-height",
       "tablet-height",
       "mobile-height",
@@ -28,7 +30,9 @@ class MarqueeImage extends HTMLElement {
 
   connectedCallback() {
     this.speed = parseFloat(this.getAttribute("speed")) || 100;
-    this.margin = parseFloat(this.getAttribute("margin")) || 20;
+    this.desktopMargin = parseFloat(this.getAttribute("desktop-margin")) || 20;
+    this.tabletMargin = parseFloat(this.getAttribute("tablet-margin")) || this.desktopMargin;
+    this.mobileMargin = parseFloat(this.getAttribute("mobile-margin")) || this.tabletMargin;
     this.desktopHeight = parseFloat(this.getAttribute("desktop-height")) || 72;
     this.tabletHeight = parseFloat(this.getAttribute("tablet-height")) || this.desktopHeight;
     this.mobileHeight = parseFloat(this.getAttribute("mobile-height")) || this.tabletHeight;
@@ -42,7 +46,17 @@ class MarqueeImage extends HTMLElement {
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (name === "speed") this.speed = parseFloat(newVal) || this.speed;
-    if (name === "margin") this.margin = parseFloat(newVal) || this.margin;
+    if (name === "desktop-margin") {
+      this.desktopMargin = parseFloat(newVal) || this.desktopMargin;
+      if (!this.getAttribute("tablet-margin")) this.tabletMargin = this.desktopMargin;
+      if (!this.getAttribute("mobile-margin")) this.mobileMargin = this.tabletMargin;
+    }
+    if (name === "tablet-margin") {
+      this.tabletMargin = parseFloat(newVal) || this.tabletMargin;
+      if (!this.getAttribute("mobile-margin")) this.mobileMargin = this.tabletMargin;
+    }
+    if (name === "mobile-margin")
+      this.mobileMargin = parseFloat(newVal) || this.mobileMargin;
     if (name === "desktop-height") {
       this.desktopHeight = parseFloat(newVal) || this.desktopHeight;
       if (!this.getAttribute("tablet-height")) this.tabletHeight = this.desktopHeight;
@@ -104,12 +118,15 @@ class MarqueeImage extends HTMLElement {
       return img.width * scale;
     });
     
+    // Get current margin based on screen size
+    const currentMargin = this.getCurrentMargin();
+    
     // Calculate base positions for one complete cycle
     this.baseCyclePositions = [];
     let x = 0;
     for (let i = 0; i < this.images.length; i++) {
       this.baseCyclePositions.push(x);
-      x += this.scaledWidths[i] + this.margin;
+      x += this.scaledWidths[i] + currentMargin;
     }
     
     // Store the width of one complete cycle
@@ -117,6 +134,19 @@ class MarqueeImage extends HTMLElement {
     
     // Reset scroll offset
     this.scrollOffset = 0;
+  }
+  
+  getCurrentMargin() {
+    const isMobile = window.innerWidth < 768;
+    const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+    
+    if (isMobile) {
+      return this.mobileMargin;
+    } else if (isTablet) {
+      return this.tabletMargin;
+    } else {
+      return this.desktopMargin;
+    }
   }
 
   drawFrame(timestamp) {

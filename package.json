@@ -1,6 +1,6 @@
 {
   "name": "@charlie404/marquee-image",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A web component for creating smooth image marquee effects",
   "main": "index.js",
   "keywords": [
