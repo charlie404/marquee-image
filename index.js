@@ -4,6 +4,7 @@ class MarqueeImage extends HTMLElement {
       "speed",
       "margin",
       "desktop-height",
+      "tablet-height",
       "mobile-height",
       "repeat",
       "reverse",
@@ -28,7 +29,8 @@ class MarqueeImage extends HTMLElement {
     this.speed = parseFloat(this.getAttribute("speed")) || 100;
     this.margin = parseFloat(this.getAttribute("margin")) || 20;
     this.desktopHeight = parseFloat(this.getAttribute("desktop-height")) || 72;
-    this.mobileHeight = parseFloat(this.getAttribute("mobile-height")) || 36;
+    this.tabletHeight = parseFloat(this.getAttribute("tablet-height")) || this.desktopHeight;
+    this.mobileHeight = parseFloat(this.getAttribute("mobile-height")) || this.tabletHeight;
     this.repeat = parseInt(this.getAttribute("repeat")) || 10;
     this.reverse =
       this.getAttribute("reverse") === "true" ||
@@ -40,8 +42,15 @@ class MarqueeImage extends HTMLElement {
   attributeChangedCallback(name, oldVal, newVal) {
     if (name === "speed") this.speed = parseFloat(newVal) || this.speed;
     if (name === "margin") this.margin = parseFloat(newVal) || this.margin;
-    if (name === "desktop-height")
+    if (name === "desktop-height") {
       this.desktopHeight = parseFloat(newVal) || this.desktopHeight;
+      if (!this.getAttribute("tablet-height")) this.tabletHeight = this.desktopHeight;
+      if (!this.getAttribute("mobile-height")) this.mobileHeight = this.tabletHeight;
+    }
+    if (name === "tablet-height") {
+      this.tabletHeight = parseFloat(newVal) || this.tabletHeight;
+      if (!this.getAttribute("mobile-height")) this.mobileHeight = this.tabletHeight;
+    }
     if (name === "mobile-height")
       this.mobileHeight = parseFloat(newVal) || this.mobileHeight;
     if (name === "repeat") this.repeat = parseInt(newVal) || this.repeat;
@@ -70,8 +79,18 @@ class MarqueeImage extends HTMLElement {
 
   resize() {
     this.canvas.width = this.clientWidth;
-    const isMobile = window.innerWidth < 1024;
-    const targetHeight = isMobile ? this.mobileHeight : this.desktopHeight;
+    const isMobile = window.innerWidth < 768;
+    const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+    let targetHeight;
+    
+    if (isMobile) {
+      targetHeight = this.mobileHeight;
+    } else if (isTablet) {
+      targetHeight = this.tabletHeight;
+    } else {
+      targetHeight = this.desktopHeight;
+    }
+    
     this.canvas.height = targetHeight;
     this.style.height = targetHeight + "px";
     this.calculatePositions();
