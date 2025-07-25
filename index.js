@@ -19,9 +19,10 @@ class MarqueeImage extends HTMLElement {
     this.shadowRoot.appendChild(this.canvas);
     this.ctx = this.canvas.getContext("2d");
     this.images = [];
-    this.widths = [];
-    this.positions = [];
-    this.totalWidth = 0;
+    this.scaledWidths = [];
+    this.baseCyclePositions = [];
+    this.cycleWidth = 0;
+    this.scrollOffset = 0;
     this.lastTimestamp = null;
   }
 
@@ -103,22 +104,19 @@ class MarqueeImage extends HTMLElement {
       return img.width * scale;
     });
     
-    // Calculate width of one complete cycle
-    this.singleCycleWidth =
-      this.scaledWidths.reduce((sum, w) => sum + w, 0) +
-      this.margin * this.images.length;
-    
-    // Calculate how many instances we need to fill the screen + buffer
-    const screenWidth = this.canvas.width;
-    const cyclesNeeded = Math.ceil((screenWidth + this.singleCycleWidth) / this.singleCycleWidth);
-    const totalInstances = Math.max(this.images.length * cyclesNeeded, this.images.length * this.repeat);
-    
-    this.positions = [];
+    // Calculate base positions for one complete cycle
+    this.baseCyclePositions = [];
     let x = 0;
-    for (let i = 0; i < totalInstances; i++) {
-      this.positions.push(x);
-      x += this.scaledWidths[i % this.images.length] + this.margin;
+    for (let i = 0; i < this.images.length; i++) {
+      this.baseCyclePositions.push(x);
+      x += this.scaledWidths[i] + this.margin;
     }
+    
+    // Store the width of one complete cycle
+    this.cycleWidth = x;
+    
+    // Reset scroll offset
+    this.scrollOffset = 0;
   }
 
   drawFrame(timestamp) {
@@ -129,23 +127,34 @@ class MarqueeImage extends HTMLElement {
       (this.reverse ? -1 : 1);
     this.lastTimestamp = timestamp;
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.positions = this.positions.map((x, i) => {
-      let newX = x - delta;
-      if (this.reverse) {
-        if (newX > this.canvas.width) newX -= this.singleCycleWidth;
-      } else {
-        if (newX < -this.scaledWidths[i % this.images.length])
-          newX += this.singleCycleWidth;
-      }
-      return newX;
-    });
+    // Update global scroll offset
+    this.scrollOffset += delta;
+    
+    // Keep offset within cycle bounds to prevent overflow
+    this.scrollOffset = this.scrollOffset % this.cycleWidth;
+    if (this.scrollOffset < 0) this.scrollOffset += this.cycleWidth;
 
-    this.positions.forEach((x, i) => {
-      const img = this.images[i % this.images.length];
-      const scaledWidth = this.scaledWidths[i % this.images.length];
-      this.ctx.drawImage(img, x, 0, scaledWidth, this.canvas.height);
-    });
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Calculate how many cycles we need to cover the screen
+    const screenWidth = this.canvas.width;
+    const cyclesNeeded = Math.ceil((screenWidth + this.cycleWidth) / this.cycleWidth);
+    
+    // Draw images from multiple cycles to ensure full coverage
+    for (let cycle = -1; cycle < cyclesNeeded + 1; cycle++) {
+      for (let i = 0; i < this.images.length; i++) {
+        // Calculate absolute position for this image in this cycle
+        const baseX = this.baseCyclePositions[i] + (cycle * this.cycleWidth);
+        const finalX = baseX - this.scrollOffset;
+        
+        // Only draw if image is potentially visible
+        const imageWidth = this.scaledWidths[i];
+        if (finalX + imageWidth >= -50 && finalX <= screenWidth + 50) {
+          const img = this.images[i];
+          this.ctx.drawImage(img, finalX, 0, imageWidth, this.canvas.height);
+        }
+      }
+    }
 
     requestAnimationFrame(this.drawFrame.bind(this));
   }
