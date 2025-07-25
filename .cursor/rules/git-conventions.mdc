@@ -1,0 +1,26 @@
+---
+description: Git commit message formatting and project conventions
+alwaysApply: true
+---
+
+## Git Commit Messages
+When generating commit messages, always follow these rules:
+- Write all commit messages in English
+- Use conventional commit format: `type(scope): description`
+- Available types: feat, fix, docs, style, refactor, test, chore
+- Keep the first line under 50 characters
+- Use imperative mood (e.g., "Add feature" not "Added feature")
+- Provide brief explanation in commit body if needed
+
+Examples:
+- `feat: add reverse prop for animation direction`
+- `fix: resolve positioning bug in mobile view`
+- `docs: update README with new examples`
+- `refactor: optimize canvas drawing performance`
+
+## Code Style for Web Components
+- Use modern JavaScript ES6+ features
+- Follow web component best practices
+- Keep functions small and focused
+- Use meaningful variable names
+- Export default class for proper imports

@@ -1,0 +1,35 @@
+{
+  "name": "@charlie404/marquee-image",
+  "version": "1.0.0",
+  "description": "A web component for creating smooth image marquee effects",
+  "main": "index.js",
+  "keywords": [
+    "marquee",
+    "image",
+    "web-component",
+    "animation",
+    "carousel"
+  ],
+  "author": "charlie404",
+  "license": "MIT",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/charlie404/marquee-image.git"
+  },
+  "homepage": "https://github.com/charlie404/marquee-image#readme",
+  "bugs": {
+    "url": "https://github.com/charlie404/marquee-image/issues"
+  },
+  "devDependencies": {
+    "vite": "^7.0.6"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
